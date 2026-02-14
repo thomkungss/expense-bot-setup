@@ -25,6 +25,7 @@ export default function SetupPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState<{ sheetTitle: string; folderName: string } | null>(null);
   const [existingConfig, setExistingConfig] = useState<ExistingConfig | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     fetch("/api/session")
@@ -54,6 +55,25 @@ export default function SetupPage() {
     const folderMatch = trimmed.match(/\/folders\/([a-zA-Z0-9_-]+)/);
     if (folderMatch) return folderMatch[1];
     return trimmed;
+  }
+
+  function handleCopyEmail() {
+    const input = document.querySelector<HTMLInputElement>('input[readonly]');
+    if (input) {
+      input.select();
+      input.setSelectionRange(0, input.value.length);
+    }
+    try {
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(SERVICE_ACCOUNT_EMAIL).catch(() => {
+          document.execCommand("copy");
+        });
+      } else {
+        document.execCommand("copy");
+      }
+    } catch {}
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   }
 
 
@@ -147,15 +167,27 @@ export default function SetupPage() {
           <p className="text-sm font-medium text-gray-800 mb-2">
             แชร์ Sheet และ Folder ให้อีเมลนี้เป็น <span className="text-amber-600">Editor</span>
           </p>
-          <input
-            type="text"
-            readOnly
-            value={SERVICE_ACCOUNT_EMAIL}
-            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-mono text-gray-700 outline-none focus:border-green-400 focus:ring-1 focus:ring-green-400"
-            onFocus={(e) => e.target.select()}
-            onClick={(e) => (e.target as HTMLInputElement).select()}
-          />
-          <p className="text-xs text-gray-400 mt-1">กดที่อีเมลค้างไว้เพื่อคัดลอก</p>
+          <div className="flex gap-2 mt-2">
+            <input
+              type="text"
+              readOnly
+              value={SERVICE_ACCOUNT_EMAIL}
+              className="flex-1 min-w-0 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-mono text-gray-700 outline-none focus:border-green-400 focus:ring-1 focus:ring-green-400"
+              onFocus={(e) => e.target.select()}
+              onClick={(e) => (e.target as HTMLInputElement).select()}
+            />
+            <button
+              type="button"
+              className={`shrink-0 px-3 py-2.5 rounded-lg text-xs font-medium transition-colors ${
+                copied
+                  ? "bg-green-100 text-green-700"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200 active:bg-gray-300"
+              }`}
+              onClick={handleCopyEmail}
+            >
+              {copied ? "คัดลอกแล้ว" : "คัดลอก"}
+            </button>
+          </div>
         </div>
 
         {/* Form */}
