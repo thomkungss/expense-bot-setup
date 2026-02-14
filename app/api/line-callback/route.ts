@@ -1,24 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSession } from "@/lib/session";
 
+function getBaseUrl(request: NextRequest): string {
+  const proto = request.headers.get("x-forwarded-proto") || "https";
+  const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || "localhost:3000";
+  return `${proto}://${host}`;
+}
+
 export async function GET(request: NextRequest) {
+  const baseUrl = getBaseUrl(request);
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
   const state = searchParams.get("state");
   const error = searchParams.get("error");
 
   if (error) {
-    return NextResponse.redirect(new URL("/?error=login_denied", request.url));
+    return NextResponse.redirect(new URL("/?error=login_denied", baseUrl));
   }
 
   if (!code || !state) {
-    return NextResponse.redirect(new URL("/?error=invalid_params", request.url));
+    return NextResponse.redirect(new URL("/?error=invalid_params", baseUrl));
   }
 
   // Verify state
   const savedState = request.cookies.get("line_oauth_state")?.value;
   if (state !== savedState) {
-    return NextResponse.redirect(new URL("/?error=invalid_state", request.url));
+    return NextResponse.redirect(new URL("/?error=invalid_state", baseUrl));
   }
 
   try {
@@ -37,7 +44,7 @@ export async function GET(request: NextRequest) {
 
     if (!tokenRes.ok) {
       console.error("Token exchange failed:", await tokenRes.text());
-      return NextResponse.redirect(new URL("/?error=token_failed", request.url));
+      return NextResponse.redirect(new URL("/?error=token_failed", baseUrl));
     }
 
     const tokenData = await tokenRes.json();
@@ -48,7 +55,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!profileRes.ok) {
-      return NextResponse.redirect(new URL("/?error=profile_failed", request.url));
+      return NextResponse.redirect(new URL("/?error=profile_failed", baseUrl));
     }
 
     const profile = await profileRes.json();
@@ -60,7 +67,7 @@ export async function GET(request: NextRequest) {
       pictureUrl: profile.pictureUrl,
     });
 
-    const response = NextResponse.redirect(new URL("/setup", request.url));
+    const response = NextResponse.redirect(new URL("/setup", baseUrl));
     response.cookies.set("session", sessionToken, {
       httpOnly: true,
       secure: true,
@@ -72,6 +79,6 @@ export async function GET(request: NextRequest) {
     return response;
   } catch (err) {
     console.error("LINE callback error:", err);
-    return NextResponse.redirect(new URL("/?error=callback_failed", request.url));
+    return NextResponse.redirect(new URL("/?error=callback_failed", baseUrl));
   }
 }
