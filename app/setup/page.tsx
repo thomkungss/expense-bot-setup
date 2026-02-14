@@ -49,15 +49,13 @@ export default function SetupPage() {
 
   function parseGoogleId(input: string): string {
     const trimmed = input.trim();
-    // Try to extract Sheet ID from URL: /spreadsheets/d/{ID}/
     const sheetMatch = trimmed.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
     if (sheetMatch) return sheetMatch[1];
-    // Try to extract Drive Folder ID from URL: /folders/{ID}
     const folderMatch = trimmed.match(/\/folders\/([a-zA-Z0-9_-]+)/);
     if (folderMatch) return folderMatch[1];
-    // Assume it's already an ID
     return trimmed;
   }
+
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -99,15 +97,15 @@ export default function SetupPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">กำลังโหลด...</p>
+      <main className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="w-6 h-6 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />
       </main>
     );
   }
 
   return (
     <main className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-lg mx-auto space-y-6">
+      <div className="max-w-lg mx-auto space-y-5">
         {/* Header */}
         <div className="flex items-center gap-3">
           {user?.pictureUrl && (
@@ -124,125 +122,70 @@ export default function SetupPage() {
           </div>
         </div>
 
-        {/* Success message */}
+        {/* Success */}
         {success && (
-          <div className="bg-green-50 border border-green-200 rounded-xl p-5 space-y-2">
-            <p className="text-green-800 font-semibold text-lg">
-              ตั้งค่าสำเร็จ!
+          <div className="bg-green-50 border border-green-200 rounded-xl p-5">
+            <p className="text-green-800 font-semibold">ตั้งค่าสำเร็จ!</p>
+            <p className="text-green-700 text-sm mt-1">
+              {success.sheetTitle} / {success.folderName}
             </p>
-            <p className="text-green-700 text-sm">
-              Sheet: {success.sheetTitle}
-            </p>
-            <p className="text-green-700 text-sm">
-              Folder: {success.folderName}
-            </p>
-            <p className="text-green-700 mt-3">
-              กลับไป LINE แล้วส่งรูปใบเสร็จได้เลย!
+            <p className="text-green-700 text-sm mt-3">
+              กลับไป LINE แล้วส่งรูปใบเสร็จได้เลย
             </p>
           </div>
         )}
 
-        {/* Instructions */}
-        <div className="bg-white rounded-xl shadow-sm p-5 space-y-4">
-          <h2 className="font-semibold text-gray-900">
-            ขั้นตอนการตั้งค่า
-          </h2>
-
-          <div className="space-y-3 text-sm text-gray-600">
-            <div className="flex gap-3">
-              <span className="bg-green-100 text-green-700 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shrink-0">
-                1
-              </span>
-              <div>
-                <p className="font-medium text-gray-800">สร้าง Google Sheet</p>
-                <p>สร้าง Spreadsheet ใหม่ใน Google Sheets</p>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <span className="bg-green-100 text-green-700 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shrink-0">
-                2
-              </span>
-              <div>
-                <p className="font-medium text-gray-800">สร้าง Google Drive Folder</p>
-                <p>สร้างโฟลเดอร์ใหม่ใน Google Drive สำหรับเก็บรูปใบเสร็จ</p>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <span className="bg-green-100 text-green-700 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shrink-0">
-                3
-              </span>
-              <div>
-                <p className="font-medium text-gray-800">แชร์ให้บอท (Editor)</p>
-                <p>
-                  แชร์ทั้ง Sheet และ Folder ให้อีเมล:
-                </p>
-                <button
-                  type="button"
-                  className="mt-1 bg-gray-100 text-gray-800 px-3 py-1.5 rounded-lg text-xs font-mono break-all text-left hover:bg-gray-200 transition-colors"
-                  onClick={() => {
-                    navigator.clipboard.writeText(SERVICE_ACCOUNT_EMAIL);
-                  }}
-                  title="คลิกเพื่อคัดลอก"
-                >
-                  {SERVICE_ACCOUNT_EMAIL}
-                  <span className="ml-2 text-gray-400">คัดลอก</span>
-                </button>
-                <p className="mt-1 text-amber-600">
-                  สิทธิ์: Editor (ผู้แก้ไข)
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <span className="bg-green-100 text-green-700 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shrink-0">
-                4
-              </span>
-              <div>
-                <p className="font-medium text-gray-800">วาง ID ด้านล่าง</p>
-                <p>
-                  คัดลอก URL หรือ ID ของ Sheet และ Folder มาวางด้านล่าง
-                </p>
-              </div>
-            </div>
+        {/* Existing config badge */}
+        {existingConfig && !success && (
+          <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm text-blue-700">
+            คุณเคยตั้งค่าไว้แล้ว สามารถอัปเดตได้
           </div>
+        )}
+
+        {/* Share email — always visible */}
+        <div className="bg-white rounded-xl shadow-sm p-5">
+          <p className="text-sm font-medium text-gray-800 mb-2">
+            แชร์ Sheet และ Folder ให้อีเมลนี้เป็น <span className="text-amber-600">Editor</span>
+          </p>
+          <input
+            type="text"
+            readOnly
+            value={SERVICE_ACCOUNT_EMAIL}
+            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-mono text-gray-700 outline-none focus:border-green-400 focus:ring-1 focus:ring-green-400"
+            onFocus={(e) => e.target.select()}
+            onClick={(e) => (e.target as HTMLInputElement).select()}
+          />
+          <p className="text-xs text-gray-400 mt-1">กดที่อีเมลค้างไว้เพื่อคัดลอก</p>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-5 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Google Sheet ID หรือ URL
+              Google Sheet
             </label>
             <input
               type="text"
               value={sheetInput}
               onChange={(e) => setSheetInput(e.target.value)}
-              placeholder="วาง URL หรือ ID ของ Google Sheet"
+              placeholder="วาง URL หรือ ID"
               className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
               required
             />
-            <p className="text-xs text-gray-400 mt-1">
-              เช่น https://docs.google.com/spreadsheets/d/abc123.../edit
-            </p>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Google Drive Folder ID หรือ URL
+              Google Drive Folder
             </label>
             <input
               type="text"
               value={driveInput}
               onChange={(e) => setDriveInput(e.target.value)}
-              placeholder="วาง URL หรือ ID ของ Google Drive Folder"
+              placeholder="วาง URL หรือ ID"
               className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
               required
             />
-            <p className="text-xs text-gray-400 mt-1">
-              เช่น https://drive.google.com/drive/folders/abc123...
-            </p>
           </div>
 
           {error && (
@@ -256,16 +199,9 @@ export default function SetupPage() {
             disabled={saving}
             className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-xl transition-colors"
           >
-            {saving ? "กำลังตรวจสอบ..." : existingConfig ? "อัปเดตและตรวจสอบ" : "ตรวจสอบและบันทึก"}
+            {saving ? "กำลังตรวจสอบ..." : existingConfig ? "อัปเดต" : "บันทึก"}
           </button>
         </form>
-
-        {/* Existing config badge */}
-        {existingConfig && !success && (
-          <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm text-blue-700">
-            คุณเคยตั้งค่าไว้แล้ว สามารถอัปเดตได้
-          </div>
-        )}
       </div>
     </main>
   );
