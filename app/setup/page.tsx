@@ -20,10 +20,9 @@ export default function SetupPage() {
   const [user, setUser] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [sheetInput, setSheetInput] = useState("");
-  const [driveInput, setDriveInput] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState<{ sheetTitle: string; folderName: string } | null>(null);
+  const [success, setSuccess] = useState<{ sheetTitle: string } | null>(null);
   const [existingConfig, setExistingConfig] = useState<ExistingConfig | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -39,7 +38,6 @@ export default function SetupPage() {
         if (data.config) {
           setExistingConfig(data.config);
           setSheetInput(data.config.sheetId);
-          setDriveInput(data.config.driveFolderId);
         }
         setLoading(false);
       })
@@ -84,13 +82,12 @@ export default function SetupPage() {
     setSaving(true);
 
     const sheetId = parseGoogleId(sheetInput);
-    const driveFolderId = parseGoogleId(driveInput);
 
     try {
       const res = await fetch("/api/save-config", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sheetId, driveFolderId }),
+        body: JSON.stringify({ sheetId }),
       });
 
       const data = await res.json();
@@ -101,12 +98,12 @@ export default function SetupPage() {
         return;
       }
 
-      setSuccess({ sheetTitle: data.sheetTitle, folderName: data.folderName });
+      setSuccess({ sheetTitle: data.sheetTitle });
       setExistingConfig({
         sheetId,
-        driveFolderId,
+        driveFolderId: "",
         sheetVerified: true,
-        driveVerified: true,
+        driveVerified: false,
       });
     } catch {
       setError("เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่");
@@ -147,7 +144,7 @@ export default function SetupPage() {
           <div className="bg-green-50 border border-green-200 rounded-xl p-5">
             <p className="text-green-800 font-semibold">ตั้งค่าสำเร็จ!</p>
             <p className="text-green-700 text-sm mt-1">
-              {success.sheetTitle} / {success.folderName}
+              {success.sheetTitle}
             </p>
             <p className="text-green-700 text-sm mt-3">
               กลับไป LINE แล้วส่งรูปใบเสร็จได้เลย
@@ -165,7 +162,7 @@ export default function SetupPage() {
         {/* Share email — always visible */}
         <div className="bg-white rounded-xl shadow-sm p-5">
           <p className="text-sm font-medium text-gray-800 mb-2">
-            แชร์ Sheet และ Folder ให้อีเมลนี้เป็น <span className="text-amber-600">Editor</span>
+            แชร์ Sheet ให้อีเมลนี้เป็น <span className="text-amber-600">Editor</span>
           </p>
           <div className="flex gap-2 mt-2">
             <input
@@ -200,20 +197,6 @@ export default function SetupPage() {
               type="text"
               value={sheetInput}
               onChange={(e) => setSheetInput(e.target.value)}
-              placeholder="วาง URL หรือ ID"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Google Drive Folder
-            </label>
-            <input
-              type="text"
-              value={driveInput}
-              onChange={(e) => setDriveInput(e.target.value)}
               placeholder="วาง URL หรือ ID"
               className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
               required

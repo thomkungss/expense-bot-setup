@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
-import { verifySheetAccess, verifyDriveAccess } from "@/lib/google";
+import { verifySheetAccess } from "@/lib/google";
 import { upsertUserConfig } from "@/lib/config-store";
 
 export async function POST(request: NextRequest) {
@@ -10,11 +10,11 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { sheetId, driveFolderId } = body;
+  const { sheetId } = body;
 
-  if (!sheetId || !driveFolderId) {
+  if (!sheetId) {
     return NextResponse.json(
-      { error: "กรุณากรอก Sheet ID และ Drive Folder ID" },
+      { error: "กรุณากรอก Sheet ID" },
       { status: 400 }
     );
   }
@@ -31,27 +31,15 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Verify Drive access
-  const driveResult = await verifyDriveAccess(driveFolderId);
-  if (!driveResult.ok) {
-    return NextResponse.json(
-      {
-        error: `ไม่สามารถเข้าถึง Google Drive Folder ได้: ${driveResult.error}`,
-        field: "driveFolderId",
-      },
-      { status: 400 }
-    );
-  }
-
-  // Save to Supabase
+  // Save config
   const saved = await upsertUserConfig({
     line_user_id: session.lineUserId,
     display_name: session.displayName,
     picture_url: session.pictureUrl,
     google_sheet_id: sheetId,
-    google_drive_folder_id: driveFolderId,
+    google_drive_folder_id: "",
     sheet_verified: true,
-    drive_verified: true,
+    drive_verified: false,
   });
 
   if (!saved) {
@@ -64,6 +52,5 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     success: true,
     sheetTitle: sheetResult.title,
-    folderName: driveResult.name,
   });
 }
